@@ -53,7 +53,7 @@
         public async Task<bool> SaveRegisteredUserAsync(RegisterUser registerUser, CancellationToken ct)
         {
             await context.RegisterUsers.AddAsync(registerUser, ct);
-            var created = await context.SaveChangesAsync();
+            var created = await context.SaveChangesAsync(ct);
 
             return created > 0;
         }
@@ -61,7 +61,7 @@
         public async Task<bool> SaveLogInUserAsync(LogInUser loggedInUser, CancellationToken ct)
         {
             await context.LogInUsers.AddAsync(loggedInUser, ct);
-            var created = await context.SaveChangesAsync();
+            var created = await context.SaveChangesAsync(ct);
 
             return created > 0;
         }

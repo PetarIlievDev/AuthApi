@@ -44,17 +44,13 @@
                 throw new Exception("UserName or Password is wrong");
             }
 
-            var user = await userRepository.GetUserHashedPasswordAsync(logInServiceRequest.Email, ct);
-            if (user == null)
-            {
-                throw new UnauthorizedAccessException("UserName or Password is wrong");
-            }
+            var user = await userRepository.GetUserHashedPasswordAsync(logInServiceRequest.Email, ct) ?? throw new UnauthorizedAccessException("UserName or Password is wrong");
 
             ValidatePasswordHash(user.Password, logInServiceRequest.Password);
 
             await userRepository.DeleteUsersExpiredTokensAsync(logInServiceRequest.Email, ct);
             var logInRequest = mapper.Map<LogInUser>(logInServiceRequest);
-            logInRequest.Token = GenerateJwtToken();
+            logInRequest.Token = GenerateJwtToken(logInServiceRequest.Email);
             logInRequest.UserId = user.UserId;
             logInRequest.ExpireAt = DateTime.UtcNow.AddMinutes(60);
 
@@ -68,15 +64,15 @@
             return null;
         }
 
-        private static string GenerateJwtToken()
+        private static string GenerateJwtToken(string email)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes("the_key_here_is_not_secured_enought_:)"));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
             var token = new JwtSecurityToken(
-                issuer: "your_issuer",
-                audience: "your_audience",
-                claims: new List<Claim>(),
+                issuer: "i_am_the_issuer",
+                audience: "and_i_am_the_audience",
+                claims: [ new Claim(ClaimTypes.Email, email) ],
                 expires: DateTime.Now.AddMinutes(30),
                 signingCredentials: creds);
 

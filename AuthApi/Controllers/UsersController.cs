@@ -1,8 +1,8 @@
 namespace AuthApi.Controllers
 {
-    using System.Text.Json;
     using AuthApi.Models;
     using AuthApi.Services.Interfaces;
+    using AuthApi.Services.Models.LogIn;
     using AuthApi.Services.Models.Register;
     using AutoMapper;
     using Microsoft.AspNetCore.Mvc;
@@ -11,7 +11,7 @@ namespace AuthApi.Controllers
 
     [ApiController]
     [Route("[controller]")]
-    public class UsersController(ILogger<UsersController> logger, IMapper mapper, IUserService userService) : ControllerBase
+    public class UsersController(IMapper mapper, IUserService userService) : ControllerBase
     {
         [HttpPost("Register")]
         [ProducesResponseType(typeof(bool), StatusCodes.Status204NoContent)]
@@ -19,7 +19,7 @@ namespace AuthApi.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> PostAsync([FromBody] RegisterUserRequest registerRequest, CancellationToken ct)
         {
-            ResponseModel<string> response = new ResponseModel<string>();
+            ResponseModel<string> response = new();
 
             try
             {
@@ -42,7 +42,7 @@ namespace AuthApi.Controllers
         [HttpPost("LogIn")]
         public async Task<IActionResult> PostAsync([FromBody] LogInRequest loginRequest, CancellationToken ct)
         {
-            ResponseModel<string> response = new ResponseModel<string>();
+            ResponseModel<LogInUserServiceResponse> response = new();
 
             try
             {
@@ -51,7 +51,7 @@ namespace AuthApi.Controllers
 
                 response.Status = true;
                 response.Message = "success";
-                response.Data = JsonSerializer.Serialize(result);
+                response.Data = result;
                 return Ok(response);
             }
             catch (Exception ex)

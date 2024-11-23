@@ -6,27 +6,27 @@
     {
         [Required]
         [StringLength(30, MinimumLength = 3)]
-        public string FirstName { get; set; }
+        public required string FirstName { get; set; }
 
         [Required]
         [StringLength(30, MinimumLength = 3)]
-        public string LastName { get; set; }
+        public required string LastName { get; set; }
 
         [EmailAddress]
         [Required]
         [MaxLength(128)]
         [RegularExpression(@"^[^@\s]+@[^@\s]+\.(com|net|org|gov)$", ErrorMessage = "Please provide correct Email address")]
-        public string Email { get; set; }
+        public required string Email { get; set; }
 
         [Required]
         [Compare("ConfirmPassword")]
         [StringLength(20, MinimumLength = 6)]
-        public string Password { get; set; }
+        public required string Password { get; set; }
 
         [Required]
         [Compare("ConfirmPassword")]
         [StringLength(20, MinimumLength = 6)]
-        public string ConfirmPassword { get; set; }
+        public required string ConfirmPassword { get; set; }
 
         public string? UserPhoto { get; set; }
     }
