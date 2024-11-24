@@ -24,7 +24,7 @@
 
         [Required]
         [DataType(DataType.Password)]
-        [StringLength(30, MinimumLength = 6)]
+        [StringLength(60, MinimumLength = 6)]
         public string Password { get; set; }
 
         [AllowNull]
