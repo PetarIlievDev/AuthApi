@@ -2,8 +2,8 @@
 {
     using System.IdentityModel.Tokens.Jwt;
     using System.Security.Claims;
-    using System.Security.Cryptography;
     using System.Text;
+    using System.Web.Helpers;
     using AuthApi.DataAccess.Models;
     using AuthApi.Repositories.Interfaces;
     using AuthApi.Services.Interfaces;
@@ -18,12 +18,13 @@
         {
             var employeeDataToSave = mapper.Map<RegisterUser>(registerUserServiceRequest);
             var userExists = await userRepository.ValidateIfUserExistAsync(employeeDataToSave.Email, ct);
+
             if (userExists)
             {
                 throw new Exception("User already exists");
             }
 
-            employeeDataToSave.Password = HashPassword(registerUserServiceRequest.Password);
+            employeeDataToSave.Password = Crypto.HashPassword(registerUserServiceRequest.Password);
 
             var result = await userRepository.SaveRegisteredUserAsync(employeeDataToSave, ct);
 
@@ -46,7 +47,10 @@
 
             var user = await userRepository.GetUserHashedPasswordAsync(logInServiceRequest.Email, ct) ?? throw new UnauthorizedAccessException("UserName or Password is wrong");
 
-            ValidatePasswordHash(user.Password, logInServiceRequest.Password);
+            if(!Crypto.VerifyHashedPassword(user.Password, logInServiceRequest.Password))
+            {
+                throw new UnauthorizedAccessException("UserName or Password is wrong");
+            }
 
             await userRepository.DeleteUsersExpiredTokensAsync(logInServiceRequest.Email, ct);
             var logInRequest = mapper.Map<LogInUser>(logInServiceRequest);
@@ -77,36 +81,6 @@
                 signingCredentials: creds);
 
             return new JwtSecurityTokenHandler().WriteToken(token);
-        }
-
-        private static string HashPassword(string plainPass)
-        {
-            var passToHash = plainPass;
-            byte[] salt;
-            new RNGCryptoServiceProvider().GetBytes(salt = new byte[16]);
-            var pbkdf2 = new Rfc2898DeriveBytes(passToHash, salt, 100000);
-            byte[] hash = pbkdf2.GetBytes(20);
-            byte[] hashBytes = new byte[36];
-            Array.Copy(salt, 0, hashBytes, 0, 16);
-            Array.Copy(hash, 0, hashBytes, 16, 20);
-            return Convert.ToBase64String(hashBytes);
-        }
-
-        private static void ValidatePasswordHash(string dbPass, string givenPass)
-        {
-            string savedPasswordHash = dbPass;
-            byte[] hashBytes = Convert.FromBase64String(savedPasswordHash);
-            byte[] salt = new byte[16];
-            Array.Copy(hashBytes, 0, salt, 0, 16);
-            var pbkdf2 = new Rfc2898DeriveBytes(givenPass, salt, 100000);
-            byte[] hash = pbkdf2.GetBytes(20);
-            for (int i = 0; i < 20; i++)
-            {
-                if (hashBytes[i + 16] != hash[i])
-                {
-                    throw new UnauthorizedAccessException("UserName or Password is wrong");
-                }
-            }
         }
     }
 }
